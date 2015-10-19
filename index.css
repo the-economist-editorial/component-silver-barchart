@@ -1,0 +1,16 @@
+@import '@economist/component-silver-xaxis';
+@import '@economist/component-silver-yaxis';
+@import '@economist/component-silver-series-bar';
+
+.bar-chart-wrapper, .svg-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+
+.chart-main-group {
+   -webkit-transition: all 5000 ease-in-out;
+    -moz-transition: all 5000 ease-in-out;
+    -o-transition: all 5000 ease-in-out;
+    transition: all 5000 ease-in-out;
+}
