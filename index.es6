@@ -167,7 +167,6 @@ export default class SilverBarChart extends React.Component {
     const config = this.props.config;
     const bLeft = config.bounds.left;
     const bTop = config.bounds.top;
-    // const transStr = 'translate(' + config.bounds.left + ', ' + config.bounds.top + ')';
     const transStr = `translate(${bLeft}, ${bTop})`;
     const mainGroup = Dthree.select('.chart-main-group');
     mainGroup.transition().duration(config.duration).attr('transform', transStr);
