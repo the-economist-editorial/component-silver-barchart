@@ -11,6 +11,8 @@ export default class SilverBarChart extends React.Component {
     return {
       test: React.PropTypes.string,
       config: React.PropTypes.object.isRequired,
+      getSvg: React.PropTypes.bool,
+      passSvg: React.PropTypes.func,
     };
   }
 
@@ -35,6 +37,7 @@ export default class SilverBarChart extends React.Component {
         'style': 'bars',
         bounds: { 'left': 50, 'top': 50, 'width': 500, 'height': 150 },
       },
+      getSvg: false,
     };
   }
 
@@ -64,9 +67,19 @@ export default class SilverBarChart extends React.Component {
   // This.setState doesn't force a premature render. So I'm
   // just using this to force use of inherited duration ofter
   // initial render is forced to default zero...
-  componentWillReceiveProps(newprops) {
+  componentWillReceiveProps(newProps) {
+    if (newProps.getSvg) {
+      // Gather up the SVG here...
+      debugger;
+      const svgNode = React.findDOMNode(this.refs.svgwrapper);
+      // Currently, this returns the contents of the SVG wrapper:
+      // thisDomNode.childNodes[0].childNodes[0].childNodes[0].innerHTML
+      const svgContent = svgNode.innerHTML;
+     this.props.passSvg(svgContent);
+      return false;
+    }
     this.setState({
-      duration: newprops.config.duration,
+      duration: newProps.config.duration,
       // duration: 1000,
     });
   }
@@ -215,7 +228,7 @@ export default class SilverBarChart extends React.Component {
 
     return (
       <div className="bar-chart-wrapper">
-        <svg className="svg-wrapper">
+        <svg className="svg-wrapper" ref="svgwrapper">
           <g className="chart-main-group">
             <SilverXaxis config={xAxisConfig}/>
             <SilverYaxis config={yAxisConfig}/>
