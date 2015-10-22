@@ -63,22 +63,22 @@ export default class SilverBarChart extends React.Component {
     this.mainDthreeGroupTransition();
   }
 
+  // COMPONENT WILL RECEIVE PROPS
   // Invoked when new props are received AFTER initial render
-  // This.setState doesn't force a premature render. So I'm
-  // just using this to force use of inherited duration ofter
-  // initial render is forced to default zero...
   componentWillReceiveProps(newProps) {
+    // Responds to request to get svg content
     if (newProps.getSvg) {
       // Gather up the SVG here...
-      debugger;
       const svgNode = React.findDOMNode(this.refs.svgwrapper);
-      // Currently, this returns the contents of the SVG wrapper:
-      // thisDomNode.childNodes[0].childNodes[0].childNodes[0].innerHTML
       const svgContent = svgNode.innerHTML;
-     this.props.passSvg(svgContent);
+      this.props.passSvg(svgContent);
+      // And to pre-empt re-render:
       return false;
     }
     this.setState({
+      // This.setState doesn't force a premature render in this context.
+      // So I'm just using this to force use of inherited duration ofter
+      // initial has used default zero...
       duration: newProps.config.duration,
       // duration: 1000,
     });
@@ -211,21 +211,6 @@ export default class SilverBarChart extends React.Component {
     const xAxisConfig = this.configXaxis(config);
     const yAxisConfig = this.configYaxis(config);
     const seriesBarsConfig = this.configSeriesBars(config);
-    //
-    // This is dead code:
-    // Early on, I tried to animate the main d3 chart group's position
-    // here. But in the end it seems better to let componentDidMount and
-    // componentDidUpdate force D3 transitions...
-    /*
-    let transStr;
-    if (this.state.firstTransition) {
-      transStr = 'translate(' + config.bounds.left + ', ' + config.bounds.top + ')';
-    } else {
-      transStr = '';
-    }
-          // <g className="chart-main-group" transform={transStr}>
-    */
-
     return (
       <div className="bar-chart-wrapper">
         <svg className="svg-wrapper" ref="svgwrapper">
