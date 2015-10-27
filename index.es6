@@ -211,19 +211,20 @@ export default class SilverBarChart extends React.Component {
     const xAxisConfig = this.configXaxis(config);
     const yAxisConfig = this.configYaxis(config);
     const seriesBarsConfig = this.configSeriesBars(config);
+      // <div className="bar-chart-wrapper">
+      // </div>
+        // <svg className="svg-wrapper" ref="svgwrapper">
+        // </svg>
+            // <rect className="chart-main-fill"/>
     return (
-      <div className="bar-chart-wrapper">
-        <svg className="svg-wrapper" ref="svgwrapper">
-          <g className="chart-main-group">
-            <SilverXaxis config={xAxisConfig}/>
-            <SilverYaxis config={yAxisConfig}/>
-            <SilverSeriesBar
-              config={seriesBarsConfig}
-              passBarClick={this.catchBarEvent.bind(this)}
-            />
-          </g>
-        </svg>
-      </div>
+      <g className="chart-main-group">
+        <SilverXaxis config={xAxisConfig}/>
+        <SilverYaxis config={yAxisConfig}/>
+        <SilverSeriesBar
+          config={seriesBarsConfig}
+          passBarClick={this.catchBarEvent.bind(this)}
+        />
+      </g>
     );
   }
 }

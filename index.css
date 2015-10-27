@@ -7,6 +7,7 @@
   height: 100%;
 }
 
+/* If this is all this does, couldn't it usefully move up the tree...? */
 .chart-main-group {
    -webkit-transition: all 5000 ease-in-out;
     -moz-transition: all 5000 ease-in-out;
