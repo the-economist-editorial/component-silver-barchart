@@ -11,8 +11,6 @@ export default class SilverBarChart extends React.Component {
     return {
       test: React.PropTypes.string,
       config: React.PropTypes.object.isRequired,
-      getSvg: React.PropTypes.bool,
-      passSvg: React.PropTypes.func,
     };
   }
 
@@ -37,7 +35,6 @@ export default class SilverBarChart extends React.Component {
         'style': 'bars',
         bounds: { 'left': 50, 'top': 50, 'width': 500, 'height': 150 },
       },
-      getSvg: false,
     };
   }
 
@@ -67,14 +64,14 @@ export default class SilverBarChart extends React.Component {
   // Invoked when new props are received AFTER initial render
   componentWillReceiveProps(newProps) {
     // Responds to request to get svg content
-    if (newProps.getSvg) {
-      // Gather up the SVG here...
-      const svgNode = React.findDOMNode(this.refs.svgwrapper);
-      const svgContent = svgNode.innerHTML;
-      this.props.passSvg(svgContent);
-      // And to pre-empt re-render:
-      return false;
-    }
+    // if (newProps.getSvg) {
+    //   // Gather up the SVG here...
+    //   const svgNode = React.findDOMNode(this.refs.svgwrapper);
+    //   const svgContent = svgNode.innerHTML;
+    //   this.props.passSvg(svgContent);
+    //   // And to pre-empt re-render:
+    //   return false;
+    // }
     this.setState({
       // This.setState doesn't force a premature render in this context.
       // So I'm just using this to force use of inherited duration ofter
@@ -197,9 +194,10 @@ export default class SilverBarChart extends React.Component {
   // I assume this gets dealt with here. Is there
   // any reason why it would get passed up the tree...?
   catchBarEvent(eventObj) {
+    // To stop the linter annoying me...
     eventObj += 'OK';
+    console.log(eventObj)
   }
-  // ========== COMM'D OUT FOR LINTING ==========
 
   // RENDER
   render() {
