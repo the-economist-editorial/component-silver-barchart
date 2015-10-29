@@ -1,8 +1,10 @@
 import React from 'react';
+import ReactDom from 'react-dom';
 import Dthree from 'd3';
 import SilverXaxis from '@economist/component-silver-xaxis';
 import SilverYaxis from '@economist/component-silver-yaxis';
 import SilverSeriesBar from '@economist/component-silver-series-bar';
+import SilverChartMargins from '@economist/component-silver-chartmargins';
 
 export default class SilverBarChart extends React.Component {
 
@@ -11,30 +13,16 @@ export default class SilverBarChart extends React.Component {
     return {
       test: React.PropTypes.string,
       config: React.PropTypes.object.isRequired,
+      // Flag and callback for svg content
+      getSvg: React.PropTypes.bool,
+      passSvg: React.PropTypes.func,
     };
   }
 
   // DEFAULT PROPS
   static get defaultProps() {
     return {
-      config: {
-        'context': 'print',
-        'data': [
-          { 'category': 'Twenty', 'value': 20 },
-          { 'category': 'Forty', 'value': 40 },
-          { 'category': 'Seventy', 'value': 70 },
-          { 'category': 'Eighty', 'value': 80 },
-        ],
-        'dimensions': { 'width': 500, 'height': 300 },
-        'duration': 0,
-        'margins': { 'top': 30, 'right': 30, 'bottom': 30, 'left': 60 },
-        'xDomain': [ 0, 80 ],
-        'yDomain': [],
-        'xOrient': 'bottom',
-        'yOrient': 'left',
-        'style': 'bars',
-        bounds: { 'left': 50, 'top': 50, 'width': 500, 'height': 150 },
-      },
+      getSvg: false,
     };
   }
 
@@ -50,11 +38,6 @@ export default class SilverBarChart extends React.Component {
     };
   }
 
-  //
-  // =======================
-  // React lifecycle methods:
-  // =======================
-
   // Invoked after initial mount
   componentDidMount() {
     this.mainDthreeGroupTransition();
@@ -64,14 +47,14 @@ export default class SilverBarChart extends React.Component {
   // Invoked when new props are received AFTER initial render
   componentWillReceiveProps(newProps) {
     // Responds to request to get svg content
-    // if (newProps.getSvg) {
-    //   // Gather up the SVG here...
-    //   const svgNode = React.findDOMNode(this.refs.svgwrapper);
-    //   const svgContent = svgNode.innerHTML;
-    //   this.props.passSvg(svgContent);
-    //   // And to pre-empt re-render:
-    //   return false;
-    // }
+    if (newProps.getSvg) {
+      // Gather up the SVG here...
+      const svgNode = ReactDom.findDOMNode(this.refs.svgwrapper);
+      const svgContent = svgNode.innerHTML;
+      this.props.passSvg(svgContent);
+      // And to pre-empt re-render:
+      return false;
+    }
     this.setState({
       // This.setState doesn't force a premature render in this context.
       // So I'm just using this to force use of inherited duration ofter
@@ -196,7 +179,7 @@ export default class SilverBarChart extends React.Component {
   catchBarEvent(eventObj) {
     // To stop the linter annoying me...
     eventObj += 'OK';
-    console.log(eventObj)
+    console.log(eventObj);
   }
 
   // RENDER
@@ -209,20 +192,32 @@ export default class SilverBarChart extends React.Component {
     const xAxisConfig = this.configXaxis(config);
     const yAxisConfig = this.configYaxis(config);
     const seriesBarsConfig = this.configSeriesBars(config);
-      // <div className="bar-chart-wrapper">
-      // </div>
-        // <svg className="svg-wrapper" ref="svgwrapper">
-        // </svg>
-            // <rect className="chart-main-fill"/>
+    // For exported SVG, chart backfill must have calculated size:
+    const dimensions = config.dimensions;
+    const xVal = 0;
+    const yVal = 0;
+    const width = dimensions.width;
+    const height = dimensions.height;
+    const backFill = (
+      <rect
+        className="chart-d3-background-fill"
+        x={xVal} y={yVal}
+        width={width} height={height}
+      />
+    );
     return (
-      <g className="chart-main-group">
-        <SilverXaxis config={xAxisConfig}/>
-        <SilverYaxis config={yAxisConfig}/>
-        <SilverSeriesBar
-          config={seriesBarsConfig}
-          passBarClick={this.catchBarEvent.bind(this)}
-        />
-      </g>
+      <svg className="svg-wrapper" ref="svgwrapper">
+        {backFill}
+        <g className="chart-main-group">
+          <SilverXaxis config={xAxisConfig}/>
+          <SilverYaxis config={yAxisConfig}/>
+          <SilverSeriesBar
+            config={seriesBarsConfig}
+            passBarClick={this.catchBarEvent.bind(this)}
+          />
+        </g>
+        <SilverChartMargins config={config}/>
+      </svg>
     );
   }
 }
