@@ -29,7 +29,6 @@ export default class SilverBarChart extends React.Component {
   // CONSTRUCTOR
   constructor(props) {
     super(props);
-    // Pack state:
     this.state = {
       // Duration defaults to zero for initial render.
       // Thereafter, componentWillReceiveProps overwrites
@@ -60,7 +59,6 @@ export default class SilverBarChart extends React.Component {
       // So I'm just using this to force use of inherited duration ofter
       // initial has used default zero...
       duration: newProps.config.duration,
-      // duration: 1000,
     });
   }
 
@@ -88,9 +86,9 @@ export default class SilverBarChart extends React.Component {
     xAxisConfig.scale = Dthree.scale.linear()
       .range([ 0, bounds.width ])
       .domain(xConf.xDomain);
-
     return xAxisConfig;
   }
+  // CONFIG X-AXIS ends
 
   // CONFIG Y-AXIS
   // Assembles y-axis config object
@@ -103,19 +101,17 @@ export default class SilverBarChart extends React.Component {
       orient: yConf.yOrient,
       tickSize: 0,
     };
-
     // Assemble the y-scale object
-    /* eslint-disable id-length */
-    const yDomain = yConf.data.map((d) => d.category);
+    const yDomain = yConf.data.map((ddd) => ddd.category);
       // NOTE: rangebands for bar charts are 'top-to-bottom', unlike
       // other components that run 'bottom-to-top'. This relates to
       // sorting...
     yAxisConfig.scale = Dthree.scale.ordinal()
       .rangeBands([ 0, bounds.height ], 0.1)
       .domain(yDomain);
-
     return yAxisConfig;
   }
+  // CONFIG Y-AXIS ends
 
   // CONFIG SERIES BARS
   // Assembles bar series config object
@@ -134,11 +130,7 @@ export default class SilverBarChart extends React.Component {
     config.data = seriesConf.data;
     // Assemble the y-scale object
     const yDomain = seriesConf.data.map((
-      d) => d.category);
-    // Was:
-    // const yDomain = seriesConf.data.map(function (d) {
-    //   return d.category;
-    // })
+      ddd) => ddd.category);
       // NOTE: rangebands for bar charts are 'top-to-bottom', unlike
       // other components that run 'bottom-to-top'. This relates to
       // sorting...
@@ -147,6 +139,7 @@ export default class SilverBarChart extends React.Component {
       .domain(yDomain);
     return config;
   }
+  // CONFIG SERIES BARS ends
 
   //
   // =========================
@@ -177,7 +170,7 @@ export default class SilverBarChart extends React.Component {
   // I assume this gets dealt with here. Is there
   // any reason why it would get passed up the tree...?
   catchBarEvent(eventObj) {
-    // To stop the linter annoying me...
+    // To stop the linter annoying me, use the event object:
     eventObj += 'OK';
     console.log(eventObj);
   }
@@ -192,7 +185,7 @@ export default class SilverBarChart extends React.Component {
     const xAxisConfig = this.configXaxis(config);
     const yAxisConfig = this.configYaxis(config);
     const seriesBarsConfig = this.configSeriesBars(config);
-    // For exported SVG, chart backfill must have calculated size:
+    // For exported SVG, chart background fill rect must have calculated size:
     const dimensions = config.dimensions;
     const xVal = 0;
     const yVal = 0;
