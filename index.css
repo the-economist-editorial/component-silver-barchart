@@ -1,13 +1,18 @@
 @import '@economist/component-silver-xaxis';
 @import '@economist/component-silver-yaxis';
 @import '@economist/component-silver-series-bar';
+@import '@economist/component-silver-chartmargins';
 
+/*
 .svg-wrapper {
-  width: 100%;
-  height: 100%;
+  width: 150px;
+  height: 150px;
 }
+*/
 
-/* If this is all this does, couldn't it usefully move up the tree...? */
+/*  If this is all this does, couldn't it usefully move up the tree,
+    so that it doesn't have to be duplicated across all style components...?
+*/
 .chart-main-group {
    -webkit-transition: all 5000 ease-in-out;
     -moz-transition: all 5000 ease-in-out;
@@ -15,6 +20,11 @@
     transition: all 5000 ease-in-out;
 }
 
+/*
+    Fill will probably override, in context component
+*/
 .chart-d3-background-fill {
   fill: #99cdcd;
+  /*width: 100%;*/
+  /*height: 100%;*/
 }
