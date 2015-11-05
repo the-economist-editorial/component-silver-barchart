@@ -28,3 +28,33 @@
   /*width: 100%;*/
   /*height: 100%;*/
 }
+
+/* I need this here for width calculations... */
+.d3-xaxis-check {
+  font-size: 14px;
+  fill: white;
+}
+.d3-yaxis-check {
+  font-size: 14px;
+  fill: white;
+}
+
+/* Marginal strings */
+.silver-d3-title-check,
+.silver-d3-subtitle-check,
+.silver-d3-source-check,
+.silver-d3-footnote-check {
+  fill: white;
+  strokewidth: 0;
+  font-family: Helvetica;
+  font-size: 12px;
+}
+.silver-d3-subtitle-check {
+  font-size: 10px;
+}
+.silver-d3-source-check {
+  font-size: 8px;
+}
+.silver-d3-footnote-check {
+  font-size: 8px;
+}
