@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDom from 'react-dom';
 import Dthree from 'd3';
+// D3 components:
 import SilverXaxis from '@economist/component-silver-xaxis';
 import SilverYaxis from '@economist/component-silver-yaxis';
 import SilverSeriesBar from '@economist/component-silver-series-bar';
@@ -41,21 +42,41 @@ export default class SilverBarChart extends React.Component {
     };
   }
 
-  // COMPONENT WILL MOUNT: adjust dimensions for number of bars...
+  // COMPONENT WILL MOUNT: adjust dimensions/bounds for number of bars...
   componentWillMount() {
-    // Function returns *just* inner box height. This doesn't (yet)
-    // allow for scale depth...
-    const innerBoxHeight = this.getInnerBoxHeight();
+    // Fix later (because in ESLint this whopper overshadows all other errors)
+    // const config = { ...this.props.config};
     const config = this.props.config;
-    // Overall chart depth is arbitrary, for now:
+    // Function returns *just* inner box height.
+    const innerBoxHeight = this.getInnerBoxHeight(config);
+    // Overall chart depth is ARBITRARY, for now. In the wild,
+    // this should be calculated from outer-box string positions
+    // and margins...
     config.dimensions.height = innerBoxHeight + 80;
+    // Note, too, that bounds.height should also be increased to
+    // allow for height of x-axis...
     config.bounds.height = innerBoxHeight;
     this.setState({ config });
   }
 
-  // Invoked after initial mount
+  // COMPONENT DID MOUNT
+  // Originally, invoked after initial mount, to move D3 group into position.
+  // Now that the double-render occurs, the 'else' case is redundant since,
+  // by definition, checkMargins=true on mount.
+  // Left in for now...
   componentDidMount() {
-    this.mainDthreeGroupTransition();
+    if (this.state.checkMargins) {
+      // On this, see: https://github.com/react-bootstrap/react-bootstrap/issues/494
+      // Legit to set state in componentDidMount...?
+      /* eslint-disable react/no-did-mount-set-state */
+      // this.setState({ checkMargins: false });
+      // Moved to separate function anyway...
+      this.checkStringWidths();
+    }
+    // else {
+    //   console.log('second render by componentDidMount');
+    //   this.mainDthreeGroupTransition();
+    // }
   }
 
   // COMPONENT WILL RECEIVE PROPS
@@ -66,12 +87,14 @@ export default class SilverBarChart extends React.Component {
       // Gather up the SVG here...
       const svgNode = ReactDom.findDOMNode(this.refs.svgwrapper);
       const svgContent = svgNode.innerHTML;
-      this.props.passSvg(svgContent);
+      newProps.passSvg(svgContent);
       // And to pre-empt re-render:
       return false;
     }
-    const innerBoxHeight = this.getInnerBoxHeight();
-    const config = this.props.config;
+    // Fix later
+    // const config = { ...newProps.config };
+    const config = newProps.config;
+    const innerBoxHeight = this.getInnerBoxHeight(config);
     // Overall chart depth is arbitrary, for now:
     config.dimensions.height = innerBoxHeight + 80;
     config.bounds.height = innerBoxHeight;
@@ -80,13 +103,111 @@ export default class SilverBarChart extends React.Component {
       // So I'm just using this to force use of inherited duration ofter
       // initial has used default zero...
       duration: newProps.config.duration,
+      // ...and to reset chart depth:
       config,
+      // ...and to force new first/2nd render cycle:
+      checkMargins: true,
     });
   }
 
   // Invoked after post-initial renders
   componentDidUpdate() {
-    this.mainDthreeGroupTransition();
+    if (this.state.checkMargins) {
+      // On this, see: https://github.com/react-bootstrap/react-bootstrap/issues/494
+      // Legit to set state in componentDidMount...?
+      /* eslint-disable react/no-did-update-set-state */
+      this.checkStringWidths();
+    } else {
+      this.mainDthreeGroupTransition();
+    }
+  }
+  /*  How flakey is this?
+      The danger is of an infinite loop.
+      I want to render only twice:
+      1) checkMargins=true -- do the checks and adjust the state:
+          reset dimensions / bounds
+          set checkMargins=false, to precipitate re-render
+      2) checkMargins=false -- draw the real stuff on the page
+          The 2nd render occurs and we find ourselves back here, where
+          we draw up the D3 with the new state.config properties...
+          Nothing then happens to precipitate a re-render
+          checkMargins is left 'false'...
+      ...until the arrival of new props, with I reset checkMargins=false
+      and start the whole rigmarole off again...
+  */
+
+  // CHECK STRING WIDTHS
+  // Called from componentDidMount/Update
+  // For TITLE and SUBTITLE, checks string width against chart width;
+  // if too long, substitutes warning string. But should eventually
+  // work out a point to turn the line and tweak chart depth
+  // SOURCE & FOOTNOTE omitted for now
+  // Adjusts left margin to longest CATEGORY string length
+  // Adjusts right margin for last xaxis label
+  checkStringWidths() {
+    const config = this.state.config;
+    const originalWidth = config.bounds.width;
+    // Context
+    const svgNode = Dthree.select('.svg-wrapper');
+    // Text object
+    const testText = svgNode.append('text')
+      .attr('id', 'testText')
+      ;
+    // +++ Title
+    let testStr = config.strings.title.content;
+    testText
+      .attr('class', 'silver-d3-title-check')
+      .text(testStr);
+    let tWidth = testText.node().getComputedTextLength();
+    if (tWidth > originalWidth) {
+      config.strings.title.content = 'Too long to display';
+    }
+    // +++ Subtitle
+    testStr = config.strings.subtitle.content;
+    // If I want to demo:
+    // testStr += ' with extra stuff for testing';
+    testText
+      .attr('class', 'silver-d3-subtitle-check')
+      .text(testStr);
+    tWidth = testText.node().getComputedTextLength();
+    if (tWidth > originalWidth) {
+      config.strings.subtitle.content = 'Too long to display';
+    }
+    // +++ Longest bar chart category:
+    // String is in config:
+    testStr = config.longestCatString;
+    testText
+      .attr('class', 'd3-yaxis-check')
+      .text(testStr);
+    // Width of text + the 5pt gap which is also Hard-coded into xaxis
+    tWidth = testText.node().getComputedTextLength() + 5;
+    // Update the bounds
+    config.bounds.left += tWidth;
+    config.bounds.width -= tWidth;
+    // +++ Last string on x-axis
+    testStr = config.xDomain[1];
+    // Crudely for now: if it's > 1,000, add a comma to the string!
+    // Don't forget decimal points, too!! But also see Evernote on
+    // D3's handling of axis ticks...
+    if (parseInt(testStr, 10) >= 1000000) {
+      // Basically, this is crap! But for now...
+      testStr += ',,';
+    } else if (parseInt(testStr, 10) >= 1000) {
+      testStr += ',';
+    }
+    testText
+      .attr('class', 'd3-xaxis-check')
+      .text(testStr);
+    tWidth = testText.node().getComputedTextLength();
+    // Hard assumption for now: that xaxis strings are centre-aligned
+    config.bounds.width -= (tWidth / 2);
+    // All done: clear the text object...
+    testText.remove();
+    // ...and precipitate 2nd render with new margin settings
+    this.setState({
+      checkMargins: false,
+      config,
+    });
   }
 
   //
@@ -177,7 +298,7 @@ export default class SilverBarChart extends React.Component {
     const bTop = config.bounds.top;
     const transStr = `translate(${bLeft}, ${bTop})`;
     const mainGroup = Dthree.select('.chart-main-group');
-    mainGroup.transition().duration(config.duration).attr('transform', transStr);
+    mainGroup.transition().duration(0).attr('transform', transStr);
   }
 
   // CATCH BAR EVENT
@@ -185,14 +306,14 @@ export default class SilverBarChart extends React.Component {
   // is initially constructed as:
   /*
     {
-      data: {category, value},
+      data: {category-string, value(s)-by-name},
       index: number
     }
   */
   // I assume this gets dealt with here. Is there
   // any reason why it would get passed up the tree...?
   catchBarEvent(eventObj) {
-    console.log(eventObj);
+    console.log(eventObj.data);
   }
 
   // SET BAR CHART Height
@@ -200,8 +321,9 @@ export default class SilverBarChart extends React.Component {
   // (i.e. height of the inner box)
   // according to the number of bars,
   // and (eventually) other chart peculiarities (clusters, overlapping...)
-  getInnerBoxHeight() {
-    const config = this.props.config;
+  // (Pass in config, since this can be called from componentWillMount
+  // or componentWillReceiveProps)
+  getInnerBoxHeight(config) {
     // Number of bars ('- 1' to exclude headers)
     const pointCount = config.pointCount;
     // Number of traces: number of 'value' elements in first data item
@@ -261,33 +383,61 @@ export default class SilverBarChart extends React.Component {
     const yVal = 0;
     const width = dimensions.width;
     const height = dimensions.height;
-    const backFill = (
-      <rect
-        className="chart-d3-background-fill"
-        x={xVal} y={yVal}
-        width={width} height={height}
-      />
-    );
+    // Default 'first' render will throw down strings for measurement:
+    let svgElements = <svg className="svg-wrapper" ref="svgwrapper"/>;
+    // Second render will construct entire D3 edifice:
+    //    Background rect
+    //    Inner box content components
+    //    Outer-box strings component
+    if (!this.state.checkMargins) {
+      svgElements = (
+        <svg
+          className="svg-wrapper" ref="svgwrapper"
+          width={width} height={height}
+        >
+          <rect
+            className="chart-d3-background-fill"
+            x={xVal} y={yVal}
+            width={width} height={height}
+          />
+          <g className="chart-main-group">
+            <SilverXaxis config={xAxisConfig}/>
+            <SilverYaxis config={yAxisConfig}/>
+            <SilverSeriesBar
+              config={seriesBarsConfig}
+              passBarClick={this.catchBarEvent.bind(this)}
+            />
+          </g>
+          <SilverChartMargins config={config}/>
+        </svg>
+      );
+    }
+
     //
     // Both of these precipitated the 'Mutating style is deprecated' warning...
     //    <svg className="svg-wrapper" ref="svgwrapper" style={{this.state.config.dimensions}}>
     //    <svg className="svg-wrapper" ref="svgwrapper" style={this.getStyle()}>
     // But I seem to get round it by using SVG non-style properties...
-    return (
-      <svg className="svg-wrapper" ref="svgwrapper"
-        width={width} height={height}
-      >
-        {backFill}
-        <g className="chart-main-group">
-          <SilverXaxis config={xAxisConfig}/>
-          <SilverYaxis config={yAxisConfig}/>
-          <SilverSeriesBar
-            config={seriesBarsConfig}
-            passBarClick={this.catchBarEvent.bind(this)}
-          />
-        </g>
-        <SilverChartMargins config={config}/>
-      </svg>
-    );
+
+    // And the original pre-conditional return:
+    // return (
+    //   <svg className="svg-wrapper" ref="svgwrapper"
+    //     width={width} height={height}
+    //   >
+    //     {backFill}
+    //     <g className="chart-main-group">
+    //       <SilverXaxis config={xAxisConfig}/>
+    //       <SilverYaxis config={yAxisConfig}/>
+    //       <SilverSeriesBar
+    //         config={seriesBarsConfig}
+    //         passBarClick={this.catchBarEvent.bind(this)}
+    //       />
+    //     </g>
+    //     <SilverChartMargins config={config}/>
+    //   </svg>
+    // );
+
+    // Now returns JSX defined above...
+    return svgElements;
   }
 }
