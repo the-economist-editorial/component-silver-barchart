@@ -14,5 +14,5 @@
   "xOrient": "bottom",
   "yOrient": "left",
   "style": "bars",
-  "bounds": { "left": 50, "top": 50, "width": 500, "height": 150 }
+  "bounds": { "left": 50, "top": 30, "width": 500, "height": 150 }
 }
