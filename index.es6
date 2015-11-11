@@ -52,7 +52,8 @@ export default class SilverBarChart extends React.Component {
     // Overall chart depth is ARBITRARY, for now. In the wild,
     // this should be calculated from outer-box string positions
     // and margins...
-    config.dimensions.height = innerBoxHeight + 80;
+    // *** Worse still, I'm doing this again in componentWillReceiveProps ***
+    config.dimensions.height = innerBoxHeight + 65;
     // Note, too, that bounds.height should also be increased to
     // allow for height of x-axis...
     config.bounds.height = innerBoxHeight;
@@ -96,7 +97,7 @@ export default class SilverBarChart extends React.Component {
     const config = newProps.config;
     const innerBoxHeight = this.getInnerBoxHeight(config);
     // Overall chart depth is arbitrary, for now:
-    config.dimensions.height = innerBoxHeight + 80;
+    config.dimensions.height = innerBoxHeight + 65;
     config.bounds.height = innerBoxHeight;
     this.setState({
       // This.setState doesn't force a premature render in this context.
@@ -112,13 +113,14 @@ export default class SilverBarChart extends React.Component {
 
   // Invoked after post-initial renders
   componentDidUpdate() {
+    const duration = this.state.duration;
     if (this.state.checkMargins) {
       // On this, see: https://github.com/react-bootstrap/react-bootstrap/issues/494
       // Legit to set state in componentDidMount...?
       /* eslint-disable react/no-did-update-set-state */
       this.checkStringWidths();
     } else {
-      this.mainDthreeGroupTransition();
+      this.mainDthreeGroupTransition(duration);
     }
   }
   /*  How flakey is this?
@@ -135,6 +137,24 @@ export default class SilverBarChart extends React.Component {
       ...until the arrival of new props, with I reset checkMargins=false
       and start the whole rigmarole off again...
   */
+
+    // Param is config object
+    // Returns revised background property
+    resetConfigBackground(config) {
+      const bConfig = config.background;
+      const height = config.dimensions.height;
+      const width = config.dimensions.width;
+      for (const i in bConfig) {
+        const bItem = bConfig[i];
+        if (bItem.adjustable.height) {
+          bItem.height = height;
+        }
+        if (bItem.adjustable.width) {
+          bItem.width = width;
+        }
+      }
+      return bConfig;
+    }
 
   // CHECK STRING WIDTHS
   // Called from componentDidMount/Update
@@ -203,6 +223,10 @@ export default class SilverBarChart extends React.Component {
     config.bounds.width -= (tWidth / 2);
     // All done: clear the text object...
     testText.remove();
+
+    // Reset background elements:
+    config.background = this.resetConfigBackground(config);
+
     // ...and precipitate 2nd render with new margin settings
     this.setState({
       checkMargins: false,
@@ -229,6 +253,7 @@ export default class SilverBarChart extends React.Component {
     xAxisConfig.scale = Dthree.scale.linear()
       .range([ 0, bounds.width ])
       .domain(xConf.xDomain);
+    xAxisConfig.checkMargins = this.state.checkMargins;
     return xAxisConfig;
   }
   // CONFIG X-AXIS ends
@@ -250,8 +275,8 @@ export default class SilverBarChart extends React.Component {
       // other components that run 'bottom-to-top'. This relates to
       // sorting...
     yAxisConfig.scale = Dthree.scale.ordinal()
-      .rangeBands([ 0, bounds.height ], 0.1)
-      .domain(yDomain);
+      .domain(yDomain)
+      .rangeBands([ 0, bounds.height ], 0.25, 0.25);
     return yAxisConfig;
   }
   // CONFIG Y-AXIS ends
@@ -278,7 +303,7 @@ export default class SilverBarChart extends React.Component {
       // other components that run 'bottom-to-top'. This relates to
       // sorting...
     config.yScale = Dthree.scale.ordinal()
-      .rangeBands([ 0, bounds.height ], 0.1)
+      .rangeBands([ 0, bounds.height ], 0.25, 0.25)
       .domain(yDomain);
     return config;
   }
@@ -290,16 +315,17 @@ export default class SilverBarChart extends React.Component {
   // =========================
 
   // MAIN D3 GROUP TRANSITION
-  // Called from componentDidMount and componentDidUpdate
+  // Called from (componentDidMount -- actually, not any more and) componentDidUpdate
   // Animates main D3 group to position
-  mainDthreeGroupTransition() {
+  mainDthreeGroupTransition(duration) {
     const config = this.props.config;
     const bLeft = config.bounds.left;
     const bTop = config.bounds.top;
     const transStr = `translate(${bLeft}, ${bTop})`;
     const mainGroup = Dthree.select('.chart-main-group');
-    mainGroup.transition().duration(0).attr('transform', transStr);
+    mainGroup.transition().duration(duration).attr('transform', transStr);
   }
+  // Because of the double-render, the above can only be called on an update (I think!)
 
   // CATCH BAR EVENT
   // Fields events on barchart bars. The incoming object
@@ -350,18 +376,19 @@ export default class SilverBarChart extends React.Component {
     }
     // debugger;
     // So: height of one cluster
-    const oneBarHeight = depthsArray[seriesCount];
+    const oneBarHeight = depthsArray[seriesCount - 1];
     // ...and height of all bars together
     let innerBoxHeight = oneBarHeight * pointCount;
     // Adjust for overlapping
     // (I've lifted this straight from my old Excel code. Frankly,
     // I don't understand it any more...)
-    if (chartStyle.includes('overlap')) {
+    // Firefox doesn't like 'includes', so:
+    if (chartStyle.search('overlap') >= 0) {
       innerBoxHeight -= oneBarHeight;
       innerBoxHeight -= ((oneBarHeight / 2) * (seriesCount - 1));
     }
     // Now allow for gaps, and return...
-    innerBoxHeight += (gapHeight * (seriesCount - 1));
+    innerBoxHeight += (gapHeight * (pointCount - 1));
     return innerBoxHeight;
   }
 
@@ -377,41 +404,46 @@ export default class SilverBarChart extends React.Component {
     const xAxisConfig = this.configXaxis(config);
     const yAxisConfig = this.configYaxis(config);
     const seriesBarsConfig = this.configSeriesBars(config);
-    // For exported SVG, chart background fill rect must have calculated size:
     const dimensions = config.dimensions;
-    const xVal = 0;
-    const yVal = 0;
     const width = dimensions.width;
     const height = dimensions.height;
-    // Default 'first' render will throw down strings for measurement:
-    let svgElements = <svg className="svg-wrapper" ref="svgwrapper"/>;
-    // Second render will construct entire D3 edifice:
-    //    Background rect
-    //    Inner box content components
-    //    Outer-box strings component
-    if (!this.state.checkMargins) {
-      svgElements = (
-        <svg
-          className="svg-wrapper" ref="svgwrapper"
-          width={width} height={height}
-        >
+
+    /*
+    // For exported SVG, chart background fill rect must have calculated size:
+    const xVal = 0;
+    const yVal = 0;
           <rect
-            className="chart-d3-background-fill"
+            className="chart-d3-backbox-main"
             x={xVal} y={yVal}
             width={width} height={height}
           />
-          <g className="chart-main-group">
-            <SilverXaxis config={xAxisConfig}/>
-            <SilverYaxis config={yAxisConfig}/>
-            <SilverSeriesBar
-              config={seriesBarsConfig}
-              passBarClick={this.catchBarEvent.bind(this)}
-            />
-          </g>
-          <SilverChartMargins config={config}/>
-        </svg>
-      );
-    }
+    */
+    // Comm'd out 'first' render will throw down strings for measurement:
+    // let svgElements = <svg className="svg-wrapper" ref="svgwrapper"/>;
+    // Second render will construct entire D3 edifice:
+    // +++ actually, both renders now +++
+    //    Background rect
+    //    Inner box content components
+    //    Outer-box strings component
+    // if (!this.state.checkMargins) {
+    // checkMargins is true on 'test' render; false on 'real' render...
+    const svgElements = (
+      <svg
+        className="svg-wrapper" ref="svgwrapper"
+        width={width} height={height}
+      >
+        <SilverChartMargins config={config}/>
+        <g className="chart-main-group">
+          <SilverXaxis config={xAxisConfig}/>
+          <SilverYaxis config={yAxisConfig}/>
+          <SilverSeriesBar
+            config={seriesBarsConfig}
+            passBarClick={this.catchBarEvent.bind(this)}
+          />
+        </g>
+      </svg>
+    );
+    // }
 
     //
     // Both of these precipitated the 'Mutating style is deprecated' warning...
