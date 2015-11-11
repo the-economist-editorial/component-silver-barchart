@@ -3,13 +3,6 @@
 @import '@economist/component-silver-series-bar';
 @import '@economist/component-silver-chartmargins';
 
-/*
-.svg-wrapper {
-  width: 150px;
-  height: 150px;
-}
-*/
-
 /*  If this is all this does, couldn't it usefully move up the tree,
     so that it doesn't have to be duplicated across all style components...?
 */
@@ -23,19 +16,24 @@
 /*
     Fill will probably override, in context component
 */
-.chart-d3-background-fill {
-  fill: #99cdcd;
-  /*width: 100%;*/
-  /*height: 100%;*/
+.chart-d3-backbox-main {
+  fill: #D5E4EA;
+  stroke-width: 0;
+}
+
+.chart-d3-backbox-sub {
+  fill: #D5E4EA;
 }
 
 /* I need this here for width calculations... */
 .d3-xaxis-check {
-  font-size: 14px;
+  font-family: "OfficinaSanITC-Book";
+  font-size: 7px;
   fill: white;
 }
 .d3-yaxis-check {
-  font-size: 14px;
+  font-family: "OfficinaSanITC-Book";
+  font-size: 7px;
   fill: white;
 }
 
@@ -46,15 +44,18 @@
 .silver-d3-footnote-check {
   fill: white;
   strokewidth: 0;
-  font-family: Helvetica;
-  font-size: 12px;
+  font-family: "OfficinaSanITC-Book";
+  font-size: 9px;
+}
+.silver-d3-title-check {
+  font-family: "OfficinaSanITC-Bold";
 }
 .silver-d3-subtitle-check {
-  font-size: 10px;
+  font-size: 7px;
 }
 .silver-d3-source-check {
-  font-size: 8px;
+  font-size: 6px;
 }
 .silver-d3-footnote-check {
-  font-size: 8px;
+  font-size: 6px;
 }
