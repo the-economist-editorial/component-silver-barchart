@@ -53,7 +53,8 @@ export default class SilverBarChart extends React.Component {
     // this should be calculated from outer-box string positions
     // and margins...
     // *** Worse still, I'm doing this again in componentWillReceiveProps ***
-    config.dimensions.height = innerBoxHeight + 65;
+    const mHeight = config.margins.top + config.margins.bottom;
+    config.dimensions.height = innerBoxHeight + mHeight;
     // Note, too, that bounds.height should also be increased to
     // allow for height of x-axis...
     config.bounds.height = innerBoxHeight;
@@ -97,7 +98,8 @@ export default class SilverBarChart extends React.Component {
     const config = newProps.config;
     const innerBoxHeight = this.getInnerBoxHeight(config);
     // Overall chart depth is arbitrary, for now:
-    config.dimensions.height = innerBoxHeight + 65;
+    const mHeight = config.margins.top + config.margins.bottom;
+    config.dimensions.height = innerBoxHeight + mHeight;
     config.bounds.height = innerBoxHeight;
     this.setState({
       // This.setState doesn't force a premature render in this context.
@@ -248,6 +250,7 @@ export default class SilverBarChart extends React.Component {
       duration: xConf.duration,
       bounds,
       orient: xConf.xOrient,
+      ticks: xConf.ticks,
     };
     // Assemble the x-scale object
     xAxisConfig.scale = Dthree.scale.linear()
@@ -302,6 +305,8 @@ export default class SilverBarChart extends React.Component {
       // NOTE: rangebands for bar charts are 'top-to-bottom', unlike
       // other components that run 'bottom-to-top'. This relates to
       // sorting...
+      // NOTE too that the rangeband setting is dup'd in configYAxis,
+      // which is stupid
     config.yScale = Dthree.scale.ordinal()
       .rangeBands([ 0, bounds.height ], 0.25, 0.25)
       .domain(yDomain);
