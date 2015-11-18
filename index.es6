@@ -47,18 +47,15 @@ export default class SilverBarChart extends React.Component {
     // Fix later (because in ESLint this whopper overshadows all other errors)
     // const config = { ...this.props.config};
     const config = this.props.config;
-    // Function returns *just* inner box height.
-    const innerBoxHeight = this.getInnerBoxHeight(config);
-    // Overall chart depth is ARBITRARY, for now. In the wild,
-    // this should be calculated from outer-box string positions
-    // and margins...
-    // *** Worse still, I'm doing this again in componentWillReceiveProps ***
-    const mHeight = config.margins.top + config.margins.bottom;
-    config.dimensions.height = innerBoxHeight + mHeight;
-    // Note, too, that bounds.height should also be increased to
-    // allow for height of x-axis...
-    config.bounds.height = innerBoxHeight;
-    this.setState({ config });
+    console.log('componentWillMount starts with overall height: ' + config.dimensions.outerbox.height);
+    // Function returns amount by which to tweak chart height (inner and outer)
+    const heightAdjust = this.adjustForBarCount(config);
+    config.dimensions.outerbox.height += heightAdjust;
+    config.dimensions.innerbox.height += heightAdjust;
+    console.log('componentWillMount ends with overall height: ' + config.dimensions.outerbox.height);
+    // Now calculate the D3 bounds
+    const bounds = this.setBounds(config.dimensions);
+    this.setState({ config, bounds });
   }
 
   // COMPONENT DID MOUNT
@@ -96,11 +93,13 @@ export default class SilverBarChart extends React.Component {
     // Fix later
     // const config = { ...newProps.config };
     const config = newProps.config;
-    const innerBoxHeight = this.getInnerBoxHeight(config);
-    // Overall chart depth is arbitrary, for now:
-    const mHeight = config.margins.top + config.margins.bottom;
-    config.dimensions.height = innerBoxHeight + mHeight;
-    config.bounds.height = innerBoxHeight;
+    console.log('componentWillReceiveProps starts with overall height: ' + config.dimensions.outerbox.height);
+    // Function returns amount by which to tweak chart height (inner and outer)
+    const heightAdjust = this.adjustForBarCount(config);
+    config.dimensions.outerbox.height += heightAdjust;
+    console.log('componentWillReceiveProps ends with overall height: ' + config.dimensions.outerbox.height);
+    // Now calculate the D3 bounds
+    const bounds = this.setBounds(config.dimensions);
     this.setState({
       // This.setState doesn't force a premature render in this context.
       // So I'm just using this to force use of inherited duration ofter
@@ -108,10 +107,14 @@ export default class SilverBarChart extends React.Component {
       duration: newProps.config.duration,
       // ...and to reset chart depth:
       config,
+      bounds,
       // ...and to force new first/2nd render cycle:
+      // checkMargins is evaluated by componentDidMount/Update.
+      // That forces 2nd render, after which flag is set back to false
       checkMargins: true,
     });
   }
+  // COMPONENT WILL RECEIVE PROPS ends
 
   // Invoked after post-initial renders
   componentDidUpdate() {
@@ -140,74 +143,93 @@ export default class SilverBarChart extends React.Component {
       and start the whole rigmarole off again...
   */
 
-    // Param is config object
-    // Returns revised background property
-    resetConfigBackground(config) {
-      const bConfig = config.background;
-      const height = config.dimensions.height;
-      const width = config.dimensions.width;
-      for (const i in bConfig) {
-        const bItem = bConfig[i];
-        if (bItem.adjustable.height) {
-          bItem.height = height;
-        }
-        if (bItem.adjustable.width) {
-          bItem.width = width;
-        }
+  // Param is config object
+  // Returns revised background property that defines
+  // all background shapes
+  resetConfigBackground(config) {
+    const bConfig = config.background;
+    const height = config.dimensions.height;
+    const width = config.dimensions.width;
+    for (const i in bConfig) {
+      const bItem = bConfig[i];
+      if (bItem.adjustable.height) {
+        bItem.height = height;
       }
-      return bConfig;
+      if (bItem.adjustable.width) {
+        bItem.width = width;
+      }
     }
+    return bConfig;
+  }
 
   // CHECK STRING WIDTHS
-  // Called from componentDidMount/Update
+  // Called from componentDidMount/Update on first (test) render
   // For TITLE and SUBTITLE, checks string width against chart width;
-  // if too long, substitutes warning string. But should eventually
-  // work out a point to turn the line and tweak chart depth
-  // SOURCE & FOOTNOTE omitted for now
-  // Adjusts left margin to longest CATEGORY string length
-  // Adjusts right margin for last xaxis label
+  // For SOURCE and FOOTNOTE, checks against 45% of chart width
+  //    (this may change, depending on revamp style)
+  // if too long, turns the line and tweaks chart depth, innerbox top
+  // and positions of relevant strings
+  // ALSO:
+  //  Adjusts left margin to longest CATEGORY string length
+  //  Adjusts right margin for last xaxis label
   checkStringWidths() {
+    console.log('checkStringWidths');
     const config = this.state.config;
-    const originalWidth = config.bounds.width;
     // Context
     const svgNode = Dthree.select('.svg-wrapper');
+    // Cumulative extra height for top margin
+    let topExtraHeight = 0;
+    // +++ Title
+    // Temp height adjustment for 'current' string
+    let tempExtraHeight = config.strings.title.leading;
+    let tSpanLen = Dthree.select('.silver-d3-title-string').node().children.length - 1;
+    tempExtraHeight *= tSpanLen;
+    // Tweak subtitle position with extra height added for title
+    config.strings.subtitle.y += tempExtraHeight;
+    topExtraHeight += tempExtraHeight;
+    // +++ Subtitle
+    tempExtraHeight = config.strings.subtitle.leading;
+    tSpanLen = Dthree.select('.silver-d3-subtitle-string').node().children.length - 1;
+    tempExtraHeight *= tSpanLen;
+    topExtraHeight += tempExtraHeight;
+    // Tweak inner box top with extra height so far...
+    // Inner box height doesn't change. Outer box height doesn't change yet...
+    config.dimensions.margins.top += topExtraHeight;
+    // Cumulative extra height for bottom margin
+    let bottomExtraHeight = 0;
+    // +++ Source
+    debugger;
+    tempExtraHeight = config.strings.source.leading;
+    tSpanLen = Dthree.select('.silver-d3-source-string').node().children.length - 1;
+    tempExtraHeight *= tSpanLen;
+    // Source moves UP from bottom
+    config.strings.source.y -= tempExtraHeight;
+    bottomExtraHeight += tempExtraHeight;
+    // For now, I'm leaving the footnote...
+    // So there's be a bit more code to deal with that, once we've decided
+    // what the source and footnote do...
+    //
+    // So now we have a cumulative extra height
+    config.dimensions.margins.bottom += bottomExtraHeight;
+    config.dimensions.outerbox.height += (topExtraHeight + bottomExtraHeight);
+    //
+    // +++ Longest bar chart category:
     // Text object
     const testText = svgNode.append('text')
       .attr('id', 'testText')
       ;
-    // +++ Title
-    let testStr = config.strings.title.content;
-    testText
-      .attr('class', 'silver-d3-title-check')
-      .text(testStr);
-    let tWidth = testText.node().getComputedTextLength();
-    if (tWidth > originalWidth) {
-      config.strings.title.content = 'Too long to display';
-    }
-    // +++ Subtitle
-    testStr = config.strings.subtitle.content;
-    // If I want to demo:
-    // testStr += ' with extra stuff for testing';
-    testText
-      .attr('class', 'silver-d3-subtitle-check')
-      .text(testStr);
-    tWidth = testText.node().getComputedTextLength();
-    if (tWidth > originalWidth) {
-      config.strings.subtitle.content = 'Too long to display';
-    }
-    // +++ Longest bar chart category:
     // String is in config:
-    testStr = config.longestCatString;
+    let testStr = config.longestCatString;
     testText
       .attr('class', 'd3-yaxis-check')
       .text(testStr);
-    // Width of text + the 5pt gap which is also Hard-coded into xaxis
-    tWidth = testText.node().getComputedTextLength() + 5;
+    // Width of text + the 5pt gap which is also HARD-CODED into xaxis
+    let tWidth = testText.node().getComputedTextLength() + 5;
     // Update the bounds
-    config.bounds.left += tWidth;
-    config.bounds.width -= tWidth;
+    config.dimensions.margins.left += tWidth;
+    config.dimensions.innerbox.width -= tWidth;
     // +++ Last string on x-axis
-    testStr = config.xDomain[1];
+    testStr = String(config.minmax.max);
     // Crudely for now: if it's > 1,000, add a comma to the string!
     // Don't forget decimal points, too!! But also see Evernote on
     // D3's handling of axis ticks...
@@ -222,17 +244,19 @@ export default class SilverBarChart extends React.Component {
       .text(testStr);
     tWidth = testText.node().getComputedTextLength();
     // Hard assumption for now: that xaxis strings are centre-aligned
-    config.bounds.width -= (tWidth / 2);
+    config.dimensions.innerbox.width -= (tWidth / 2);
     // All done: clear the text object...
     testText.remove();
-
     // Reset background elements:
     config.background = this.resetConfigBackground(config);
-
-    // ...and precipitate 2nd render with new margin settings
+    // Recalculate bounds...
+    const bounds = this.setBounds(config.dimensions);
+    // ...and precipitate 2nd render with new margin settings,
+    // turning flag off to prevent infinite loop...
     this.setState({
       checkMargins: false,
       config,
+      bounds,
     });
   }
 
@@ -245,17 +269,16 @@ export default class SilverBarChart extends React.Component {
   // Assembles x-axis config object with properties:
   // duration, bounds, orient, scale
   configXaxis(xConf) {
-    const bounds = xConf.bounds;
     const xAxisConfig = {
       duration: xConf.duration,
-      bounds,
+      bounds: this.state.bounds,
       orient: xConf.xOrient,
-      ticks: xConf.ticks,
+      ticks: xConf.minmax.ticks,
     };
     // Assemble the x-scale object
     xAxisConfig.scale = Dthree.scale.linear()
-      .range([ 0, bounds.width ])
-      .domain(xConf.xDomain);
+      .range([ 0, this.state.bounds.width ])
+      .domain([ xConf.minmax.min, xConf.minmax.max ]);
     xAxisConfig.checkMargins = this.state.checkMargins;
     return xAxisConfig;
   }
@@ -265,10 +288,9 @@ export default class SilverBarChart extends React.Component {
   // Assembles y-axis config object
   configYaxis(yConf) {
     // Default: duration, bounds and orient
-    const bounds = yConf.bounds;
     const yAxisConfig = {
       duration: yConf.duration,
-      bounds,
+      bounds: this.state.bounds,
       orient: yConf.yOrient,
       tickSize: 0,
     };
@@ -279,7 +301,7 @@ export default class SilverBarChart extends React.Component {
       // sorting...
     yAxisConfig.scale = Dthree.scale.ordinal()
       .domain(yDomain)
-      .rangeBands([ 0, bounds.height ], 0.25, 0.25);
+      .rangeBands([ 0, this.state.bounds.height ], 0.25, 0.25);
     return yAxisConfig;
   }
   // CONFIG Y-AXIS ends
@@ -287,16 +309,15 @@ export default class SilverBarChart extends React.Component {
   // CONFIG SERIES BARS
   // Assembles bar series config object
   configSeriesBars(seriesConf) {
-    // Default: duration, bounds and orient
-    const bounds = seriesConf.bounds;
     const config = {
       duration: seriesConf.duration,
-      bounds,
+      bounds: this.state.bounds,
     };
     // Assemble the x-scale object
     config.xScale = Dthree.scale.linear()
-      .range([ 0, bounds.width ])
-      .domain(seriesConf.xDomain);
+      .range([ 0, this.state.bounds.width ])
+      .domain([ seriesConf.minmax.min, seriesConf.minmax.max ]);
+      // .domain(this.state.xDomain);
     // And the data:
     config.data = seriesConf.data;
     // Assemble the y-scale object
@@ -308,11 +329,26 @@ export default class SilverBarChart extends React.Component {
       // NOTE too that the rangeband setting is dup'd in configYAxis,
       // which is stupid
     config.yScale = Dthree.scale.ordinal()
-      .rangeBands([ 0, bounds.height ], 0.25, 0.25)
+      .rangeBands([ 0, this.state.bounds.height ], 0.25, 0.25)
       .domain(yDomain);
     return config;
   }
   // CONFIG SERIES BARS ends
+
+  // SET BOUNDS
+  // Called from all D3-component config-assemblers to generate the
+  // bounds object
+  setBounds(dimensions) {
+    // Bounds is an object with 4 properties: inner box height and width...
+    const bounds = {};
+    bounds.height = dimensions.innerbox.height;
+    bounds.width = dimensions.innerbox.width;
+    // ... and top and left positions:
+    bounds.top = dimensions.margins.top;
+    bounds.left = dimensions.margins.left;
+    return bounds;
+  }
+  // SET BOUNDS ends
 
   //
   // =========================
@@ -323,9 +359,9 @@ export default class SilverBarChart extends React.Component {
   // Called from (componentDidMount -- actually, not any more and) componentDidUpdate
   // Animates main D3 group to position
   mainDthreeGroupTransition(duration) {
-    const config = this.props.config;
-    const bLeft = config.bounds.left;
-    const bTop = config.bounds.top;
+    const margins = this.props.config.dimensions.margins;
+    const bLeft = margins.left;
+    const bTop = margins.top;
     const transStr = `translate(${bLeft}, ${bTop})`;
     const mainGroup = Dthree.select('.chart-main-group');
     mainGroup.transition().duration(duration).attr('transform', transStr);
@@ -344,18 +380,19 @@ export default class SilverBarChart extends React.Component {
   // I assume this gets dealt with here. Is there
   // any reason why it would get passed up the tree...?
   catchBarEvent(eventObj) {
+    /* eslint-disable no-console */
     console.log(eventObj.data);
   }
 
-  // SET BAR CHART Height
-  // Called from ???; returns chart's inner height
-  // (i.e. height of the inner box)
-  // according to the number of bars,
-  // and (eventually) other chart peculiarities (clusters, overlapping...)
-  // (Pass in config, since this can be called from componentWillMount
-  // or componentWillReceiveProps)
-  getInnerBoxHeight(config) {
+  // ADJUST FOR BAR COUNT
+  // Called from componentWillMount and componentWillReceiveProps
+  // Calculates chart's inner-box height (according to the number of bars
+  // and - eventually - other chart peculiarities (clusters, overlapping...)
+  // Returns amount by which chart height changes (inner and outer boxes)
+  adjustForBarCount(config) {
+    // console.log('adjustForBarCount starts with overall height: ' + config.dimensions.outerbox.height);
     // Number of bars ('- 1' to exclude headers)
+    const originalInnerBoxHeight = config.dimensions.innerbox.height;
     const pointCount = config.pointCount;
     // Number of traces: number of 'value' elements in first data item
     let seriesCount = config.seriesCount;
@@ -394,7 +431,7 @@ export default class SilverBarChart extends React.Component {
     }
     // Now allow for gaps, and return...
     innerBoxHeight += (gapHeight * (pointCount - 1));
-    return innerBoxHeight;
+    return innerBoxHeight - originalInnerBoxHeight;
   }
 
   getStyle() {
@@ -409,9 +446,10 @@ export default class SilverBarChart extends React.Component {
     const xAxisConfig = this.configXaxis(config);
     const yAxisConfig = this.configYaxis(config);
     const seriesBarsConfig = this.configSeriesBars(config);
+    // Outer dimensions of the chart background fill
     const dimensions = config.dimensions;
-    const width = dimensions.width;
-    const height = dimensions.height;
+    const width = dimensions.outerbox.width;
+    const height = dimensions.outerbox.height;
 
     /*
     // For exported SVG, chart background fill rect must have calculated size:
