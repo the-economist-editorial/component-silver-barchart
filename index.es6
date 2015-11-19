@@ -47,12 +47,13 @@ export default class SilverBarChart extends React.Component {
     // Fix later (because in ESLint this whopper overshadows all other errors)
     // const config = { ...this.props.config};
     const config = this.props.config;
-    console.log('componentWillMount starts with overall height: ' + config.dimensions.outerbox.height);
+    // this.reportDimensions('componentWillMount', config.dimensions);
+    // console.log('componentWillMount starts with overall height: ' + config.dimensions.outerbox.height);
     // Function returns amount by which to tweak chart height (inner and outer)
     const heightAdjust = this.adjustForBarCount(config);
     config.dimensions.outerbox.height += heightAdjust;
     config.dimensions.innerbox.height += heightAdjust;
-    console.log('componentWillMount ends with overall height: ' + config.dimensions.outerbox.height);
+    // console.log('componentWillMount ends with overall height: ' + config.dimensions.outerbox.height);
     // Now calculate the D3 bounds
     const bounds = this.setBounds(config.dimensions);
     this.setState({ config, bounds });
@@ -64,6 +65,8 @@ export default class SilverBarChart extends React.Component {
   // by definition, checkMargins=true on mount.
   // Left in for now...
   componentDidMount() {
+    // const config = this.state.config;
+    // this.reportDimensions('componentDidMount', config.dimensions);
     if (this.state.checkMargins) {
       // On this, see: https://github.com/react-bootstrap/react-bootstrap/issues/494
       // Legit to set state in componentDidMount...?
@@ -86,18 +89,21 @@ export default class SilverBarChart extends React.Component {
       // Gather up the SVG here...
       const svgNode = ReactDom.findDOMNode(this.refs.svgwrapper);
       const svgContent = svgNode.innerHTML;
+      // Call inherited handler to process SVG
       newProps.passSvg(svgContent);
-      // And to pre-empt re-render:
+      // And to prevent a re-render:
       return false;
     }
-    // Fix later
+    // Fix later: leave for now because it conceals other potential errors
     // const config = { ...newProps.config };
     const config = newProps.config;
-    console.log('componentWillReceiveProps starts with overall height: ' + config.dimensions.outerbox.height);
+    // For debugging:
+    // this.reportDimensions('componentWillReceiveProps', config.dimensions);
     // Function returns amount by which to tweak chart height (inner and outer)
     const heightAdjust = this.adjustForBarCount(config);
     config.dimensions.outerbox.height += heightAdjust;
-    console.log('componentWillReceiveProps ends with overall height: ' + config.dimensions.outerbox.height);
+    config.dimensions.innerbox.height += heightAdjust;
+    // console.log('componentWillReceiveProps ends with overall height: ' + config.dimensions.outerbox.height);
     // Now calculate the D3 bounds
     const bounds = this.setBounds(config.dimensions);
     this.setState({
@@ -118,6 +124,8 @@ export default class SilverBarChart extends React.Component {
 
   // Invoked after post-initial renders
   componentDidUpdate() {
+    // const config = this.state.config;
+    // this.reportDimensions('componentDidUpdate', config.dimensions);
     const duration = this.state.duration;
     if (this.state.checkMargins) {
       // On this, see: https://github.com/react-bootstrap/react-bootstrap/issues/494
@@ -143,6 +151,23 @@ export default class SilverBarChart extends React.Component {
       and start the whole rigmarole off again...
   */
 
+  // REPORT DIMENSIONS
+  // is a debugging function, called from various situations
+  // and eventually deletable...
+  reportDimensions(situation, dims) {
+    const outerheight = dims.outerbox.height;
+    const topMarg = dims.margins.top;
+    const bottomMarg = dims.margins.bottom;
+    const innerheight = dims.innerbox.height;
+    let msg = `${situation}: `;
+    msg += `outerbox height=${outerheight}; `;
+    msg += `top margin=${topMarg}; `;
+    msg += `bottom margin=${bottomMarg}; `;
+    msg += `innerbox height=${innerheight}`;
+    // console.log(msg);
+  }
+  // REPORT DIMENSIONS ends
+
   // Param is config object
   // Returns revised background property that defines
   // all background shapes
@@ -152,7 +177,10 @@ export default class SilverBarChart extends React.Component {
     const width = config.dimensions.width;
     for (const i in bConfig) {
       const bItem = bConfig[i];
+      // NOTE: this is just testing. I need to set
+      // this up properly in the config file...
       if (bItem.adjustable.height) {
+        // debugger;
         bItem.height = height;
       }
       if (bItem.adjustable.width) {
@@ -172,15 +200,18 @@ export default class SilverBarChart extends React.Component {
   // ALSO:
   //  Adjusts left margin to longest CATEGORY string length
   //  Adjusts right margin for last xaxis label
+  // NOTE: this eventually (probably) moves up to ChartWrapper and gets
+  // passed into all style components as a prop... (May need a parameter,
+  //  or even to split into 2 separate functions, according to style...)
   checkStringWidths() {
-    console.log('checkStringWidths');
+    // console.log('checkStringWidths');
     const config = this.state.config;
     // Context
     const svgNode = Dthree.select('.svg-wrapper');
     // Cumulative extra height for top margin
     let topExtraHeight = 0;
     // +++ Title
-    // Temp height adjustment for 'current' string
+    // Temp height adjustment for 'current' string. Reset for each string.
     let tempExtraHeight = config.strings.title.leading;
     let tSpanLen = Dthree.select('.silver-d3-title-string').node().children.length - 1;
     tempExtraHeight *= tSpanLen;
@@ -198,7 +229,6 @@ export default class SilverBarChart extends React.Component {
     // Cumulative extra height for bottom margin
     let bottomExtraHeight = 0;
     // +++ Source
-    debugger;
     tempExtraHeight = config.strings.source.leading;
     tSpanLen = Dthree.select('.silver-d3-source-string').node().children.length - 1;
     tempExtraHeight *= tSpanLen;
@@ -431,7 +461,9 @@ export default class SilverBarChart extends React.Component {
     }
     // Now allow for gaps, and return...
     innerBoxHeight += (gapHeight * (pointCount - 1));
-    return innerBoxHeight - originalInnerBoxHeight;
+    const returnedHeight = innerBoxHeight - originalInnerBoxHeight;
+    // console.log('Returned height of ' + returnedHeight);
+    return returnedHeight;
   }
 
   getStyle() {
@@ -441,6 +473,11 @@ export default class SilverBarChart extends React.Component {
   // RENDER
   render() {
     const config = this.state.config;
+    if (this.state.checkMargins) {
+      // this.reportDimensions('First render', config.dimensions);
+    } else {
+      // this.reportDimensions('Second render', config.dimensions);
+    }
     config.duration = this.state.duration;
     // Config objects for the various d3 components:
     const xAxisConfig = this.configXaxis(config);
@@ -450,6 +487,8 @@ export default class SilverBarChart extends React.Component {
     const dimensions = config.dimensions;
     const width = dimensions.outerbox.width;
     const height = dimensions.outerbox.height;
+
+    // console.log(seriesBarsConfig.bounds);
 
     /*
     // For exported SVG, chart background fill rect must have calculated size:
