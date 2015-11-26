@@ -47,13 +47,10 @@ export default class SilverBarChart extends React.Component {
     // Fix later (because in ESLint this whopper overshadows all other errors)
     // const config = { ...this.props.config};
     const config = this.props.config;
-    // this.reportDimensions('componentWillMount', config.dimensions);
-    // console.log('componentWillMount starts with overall height: ' + config.dimensions.outerbox.height);
     // Function returns amount by which to tweak chart height (inner and outer)
     const heightAdjust = this.adjustForBarCount(config);
     config.dimensions.outerbox.height += heightAdjust;
     config.dimensions.innerbox.height += heightAdjust;
-    // console.log('componentWillMount ends with overall height: ' + config.dimensions.outerbox.height);
     // Now calculate the D3 bounds
     const bounds = this.setBounds(config.dimensions);
     this.setState({ config, bounds });
@@ -65,8 +62,6 @@ export default class SilverBarChart extends React.Component {
   // by definition, checkMargins=true on mount.
   // Left in for now...
   componentDidMount() {
-    // const config = this.state.config;
-    // this.reportDimensions('componentDidMount', config.dimensions);
     if (this.state.checkMargins) {
       // On this, see: https://github.com/react-bootstrap/react-bootstrap/issues/494
       // Legit to set state in componentDidMount...?
@@ -75,10 +70,6 @@ export default class SilverBarChart extends React.Component {
       // Moved to separate function anyway...
       this.checkStringWidths();
     }
-    // else {
-    //   console.log('second render by componentDidMount');
-    //   this.mainDthreeGroupTransition();
-    // }
   }
 
   // COMPONENT WILL RECEIVE PROPS
@@ -325,7 +316,9 @@ export default class SilverBarChart extends React.Component {
       tickSize: 0,
     };
     // Assemble the y-scale object
-    const yDomain = yConf.data.map((ddd) => ddd.category);
+    // Get category column header, to identify each cat string in data:
+    const catHead = yConf.headers[0];
+    const yDomain = yConf.data.map((ddd) => ddd[catHead]);
       // NOTE: rangebands for bar charts are 'top-to-bottom', unlike
       // other components that run 'bottom-to-top'. This relates to
       // sorting...
@@ -350,9 +343,12 @@ export default class SilverBarChart extends React.Component {
       // .domain(this.state.xDomain);
     // And the data:
     config.data = seriesConf.data;
+    config.headers = seriesConf.headers;
     // Assemble the y-scale object
-    const yDomain = seriesConf.data.map((
-      ddd) => ddd.category);
+    // Get category column header, to identify each cat string in data:
+    const catHead = seriesConf.headers[0];
+    const yDomain = seriesConf.data.map((ddd) => ddd[catHead]);
+    // const yDomain = seriesConf.data.map((ddd) => ddd.category);
       // NOTE: rangebands for bar charts are 'top-to-bottom', unlike
       // other components that run 'bottom-to-top'. This relates to
       // sorting...
@@ -473,8 +469,9 @@ export default class SilverBarChart extends React.Component {
   // RENDER
   render() {
     const config = this.state.config;
+    console.log(config.headers);
     if (this.state.checkMargins) {
-      // this.reportDimensions('First render', config.dimensions);
+      // this.reportDimensions('First render', config.dimensions );
     } else {
       // this.reportDimensions('Second render', config.dimensions);
     }
