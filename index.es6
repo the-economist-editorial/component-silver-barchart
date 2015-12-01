@@ -469,7 +469,6 @@ export default class SilverBarChart extends React.Component {
   // RENDER
   render() {
     const config = this.state.config;
-    console.log(config.headers);
     if (this.state.checkMargins) {
       // this.reportDimensions('First render', config.dimensions );
     } else {
@@ -484,8 +483,6 @@ export default class SilverBarChart extends React.Component {
     const dimensions = config.dimensions;
     const width = dimensions.outerbox.width;
     const height = dimensions.outerbox.height;
-
-    // console.log(seriesBarsConfig.bounds);
 
     /*
     // For exported SVG, chart background fill rect must have calculated size:
