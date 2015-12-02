@@ -481,8 +481,14 @@ export default class SilverBarChart extends React.Component {
     const seriesBarsConfig = this.configSeriesBars(config);
     // Outer dimensions of the chart background fill
     const dimensions = config.dimensions;
-    const width = dimensions.outerbox.width;
-    const height = dimensions.outerbox.height;
+
+    // NOTE on the svg-wrapper. I used to explicitly set dimensions with:
+    //    width={width} height={height}
+    // But I've removed that. The assumption has to be, however, that there
+    // MUST be a 100% width/height BACKGROUND BOX, to force SVG size...
+    //    I set {width} and {height} with:
+    //    const width = dimensions.outerbox.width;
+    //    const height = dimensions.outerbox.height;
 
     /*
     // For exported SVG, chart background fill rect must have calculated size:
@@ -503,10 +509,10 @@ export default class SilverBarChart extends React.Component {
     //    Outer-box strings component
     // if (!this.state.checkMargins) {
     // checkMargins is true on 'test' render; false on 'real' render...
+
     const svgElements = (
       <svg
         className="svg-wrapper" ref="svgwrapper"
-        width={width} height={height}
       >
         <SilverChartMargins config={config}/>
         <g className="chart-main-group">

@@ -13,9 +13,8 @@
     transition: all 5000 ease-in-out;
 }
 
-/*
+/* I CAN'T REMEMBER WHAT THIS WAS FOR...
     Fill will probably override, in context component
-*/
 .chart-d3-backbox-main {
   fill: #D5E4EA;
   stroke-width: 0;
@@ -24,6 +23,7 @@
 .chart-d3-backbox-sub {
   fill: #D5E4EA;
 }
+*/
 
 /* I need this here for width calculations... */
 .d3-xaxis-check {
