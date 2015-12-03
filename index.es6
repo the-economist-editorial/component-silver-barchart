@@ -48,9 +48,10 @@ export default class SilverBarChart extends React.Component {
     // const config = { ...this.props.config};
     const config = this.props.config;
     // Function returns amount by which to tweak chart height (inner and outer)
-    const heightAdjust = this.adjustForBarCount(config);
-    config.dimensions.outerbox.height += heightAdjust;
-    config.dimensions.innerbox.height += heightAdjust;
+    // const heightAdjust = this.adjustForBarCount(config);
+    // NOTE: comm'd out change to outerbox height
+    // config.dimensions.outerbox.height += heightAdjust;
+    // config.dimensions.innerbox.height += heightAdjust;
     // Now calculate the D3 bounds
     const bounds = this.setBounds(config.dimensions);
     this.setState({ config, bounds });
@@ -91,9 +92,10 @@ export default class SilverBarChart extends React.Component {
     // For debugging:
     // this.reportDimensions('componentWillReceiveProps', config.dimensions);
     // Function returns amount by which to tweak chart height (inner and outer)
-    const heightAdjust = this.adjustForBarCount(config);
-    config.dimensions.outerbox.height += heightAdjust;
-    config.dimensions.innerbox.height += heightAdjust;
+    // const heightAdjust = this.adjustForBarCount(config);
+    // NOTE: comm'd out change to outerbox height
+    // config.dimensions.outerbox.height += heightAdjust;
+    // config.dimensions.innerbox.height += heightAdjust;
     // console.log('componentWillReceiveProps ends with overall height: ' + config.dimensions.outerbox.height);
     // Now calculate the D3 bounds
     const bounds = this.setBounds(config.dimensions);
@@ -366,6 +368,7 @@ export default class SilverBarChart extends React.Component {
   // bounds object
   setBounds(dimensions) {
     // Bounds is an object with 4 properties: inner box height and width...
+    // debugger;
     const bounds = {};
     bounds.height = dimensions.innerbox.height;
     bounds.width = dimensions.innerbox.width;
@@ -416,7 +419,7 @@ export default class SilverBarChart extends React.Component {
   // and - eventually - other chart peculiarities (clusters, overlapping...)
   // Returns amount by which chart height changes (inner and outer boxes)
   adjustForBarCount(config) {
-    // console.log('adjustForBarCount starts with overall height: ' + config.dimensions.outerbox.height);
+    // // console.log('adjustForBarCount starts with overall height: ' + config.dimensions.outerbox.height);
     // Number of bars ('- 1' to exclude headers)
     const originalInnerBoxHeight = config.dimensions.innerbox.height;
     const pointCount = config.pointCount;
@@ -469,26 +472,28 @@ export default class SilverBarChart extends React.Component {
   // RENDER
   render() {
     const config = this.state.config;
+    console.log(`Outerbox height in BarChart: ${config.dimensions.outerbox.height}`);
+    /*
     if (this.state.checkMargins) {
-      // this.reportDimensions('First render', config.dimensions );
+      this.reportDimensions('First render', config.dimensions );
     } else {
-      // this.reportDimensions('Second render', config.dimensions);
+      this.reportDimensions('Second render', config.dimensions);
     }
+    */
     config.duration = this.state.duration;
     // Config objects for the various d3 components:
     const xAxisConfig = this.configXaxis(config);
     const yAxisConfig = this.configYaxis(config);
     const seriesBarsConfig = this.configSeriesBars(config);
-    // Outer dimensions of the chart background fill
-    const dimensions = config.dimensions;
 
     // NOTE on the svg-wrapper. I used to explicitly set dimensions with:
     //    width={width} height={height}
     // But I've removed that. The assumption has to be, however, that there
     // MUST be a 100% width/height BACKGROUND BOX, to force SVG size...
     //    I set {width} and {height} with:
-    //    const width = dimensions.outerbox.width;
-    //    const height = dimensions.outerbox.height;
+    const dimensions = config.dimensions;
+    const width = dimensions.outerbox.width;
+    const height = dimensions.outerbox.height;
 
     /*
     // For exported SVG, chart background fill rect must have calculated size:
@@ -509,10 +514,12 @@ export default class SilverBarChart extends React.Component {
     //    Outer-box strings component
     // if (!this.state.checkMargins) {
     // checkMargins is true on 'test' render; false on 'real' render...
-
+        // width={width} height={height}
+    //
     const svgElements = (
       <svg
         className="svg-wrapper" ref="svgwrapper"
+        width={width} height={height}
       >
         <SilverChartMargins config={config}/>
         <g className="chart-main-group">
@@ -525,6 +532,23 @@ export default class SilverBarChart extends React.Component {
         </g>
       </svg>
     );
+    // if (this.state.duration > 0) {
+    //   svgElements = (
+    //     <svg
+    //       className="svg-wrapper" ref="svgwrapper"
+    //     >
+    //       <SilverChartMargins config={config}/>
+    //       <g className="chart-main-group">
+    //         <SilverXaxis config={xAxisConfig}/>
+    //         <SilverYaxis config={yAxisConfig}/>
+    //         <SilverSeriesBar
+    //           config={seriesBarsConfig}
+    //           passBarClick={this.catchBarEvent.bind(this)}
+    //         />
+    //       </g>
+    //     </svg>
+    //   );
+    // }
     // }
 
     //
