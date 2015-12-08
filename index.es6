@@ -472,7 +472,6 @@ export default class SilverBarChart extends React.Component {
   // RENDER
   render() {
     const config = this.state.config;
-    console.log(`Outerbox height in BarChart: ${config.dimensions.outerbox.height}`);
     /*
     if (this.state.checkMargins) {
       this.reportDimensions('First render', config.dimensions );

@@ -1,4 +1,5 @@
 {
+  "NOTE": "This fil is no longer functional; it merely documents content of config object bequeathed by SilverBullet",
   "context": "print",
   "data": [
     { "category": "Twenty", "value": 20 },
@@ -6,13 +7,24 @@
     { "category": "Seventy", "value": 70 },
     { "category": "Eighty", "value": 80 }
   ],
-  "dimensions": { "width": 500, "height": 300 },
+  "dimensions": { "width": 145, "height": 160 },
   "duration": 0,
-  "margins": { "top": 30, "right": 30, "bottom": 30, "left": 60 },
-  "xDomain": [ 0, 80 ],
-  "yDomain": [],
-  "xOrient": "bottom",
-  "yOrient": "left",
-  "style": "bars",
-  "bounds": { "left": 50, "top": 30, "width": 500, "height": 150 }
+  "headers": ["category", "x"],
+  "isValid": true,
+  "longestCatString": "Ninefive",
+  "minmax": {
+    "increment": 20,
+    "max": 80,
+    "min": 0,
+    "ticks": 4
+  },
+  "pointCount": 7,
+  "seriesCount": 1,
+  "strings": {
+    "footnote": {"content": ""},
+    "source": {"content": "Source: to come"},
+    "subtitle": {"content": "To come"},
+    "title": {"content": "To come"}
+  },
+  "style": "bars"
 }
