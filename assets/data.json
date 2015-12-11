@@ -1,5 +1,5 @@
 {
-  "NOTE": "This fil is no longer functional; it merely documents content of config object bequeathed by SilverBullet",
+  "NOTE": "This file is no longer functional; it merely documents content of config object bequeathed by SilverBullet",
   "context": "print",
   "data": [
     { "category": "Twenty", "value": 20 },

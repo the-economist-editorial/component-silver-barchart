@@ -1,0 +1,31 @@
+{
+  "NOTES": "Properties for BAR CHARTS",
+  "xAxis": {
+    "orient": "top",
+    "tickLength": {
+      "across": true,
+      "length": 25
+    },
+    "tickPadding": 3
+  },
+  "yAxis": {
+    "orient": "left",
+    "tickLength": {
+      "across": false,
+      "length": 0
+    },
+    "tickPadding": 3
+  },
+  "series": {
+    "SERIES_COLOUR_NOTES_1": "Array of arrays, defining colours to use for series",
+    "SERIES_COLOUR_NOTES_2": "First level is number of series drawn",
+    "SERIES_COLOUR_NOTES_3": "Second level is position of series in the sequence",
+    "SERIES_COLOUR_NOTES_4": "This might, of course, have to move to context props...",
+    "seriesColours": [
+      [ "#004D64" ],
+      [ "#004D64", "#6995A8" ],
+      [ "#004D64", "#6995A8", "#009FD8" ],
+      [ "#004D64", "#6995A8", "#009FD8", "#ACADB0" ]
+    ]
+  }
+}
