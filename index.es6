@@ -268,6 +268,7 @@ export default class SilverBarChart extends React.Component {
       tickLength = this.state.bounds.height;
     }
     const xAxisConfig = {
+      firstRender: this.state.checkMargins,
       duration: xConf.duration,
       bounds: this.state.bounds,
       tickDensity: xConf.minmax.ticks,
@@ -296,6 +297,7 @@ export default class SilverBarChart extends React.Component {
       tickLength = this.state.bounds.width;
     }
     const yAxisConfig = {
+      firstRender: this.state.checkMargins,
       duration: yConf.duration,
       bounds: this.state.bounds,
       orient: barProperties.yAxis.orient,
@@ -322,6 +324,7 @@ export default class SilverBarChart extends React.Component {
   // Assembles bar series config object
   configSeriesBars(seriesConf) {
     const config = {
+      firstRender: this.state.checkMargins,
       duration: seriesConf.duration,
       bounds: this.state.bounds,
     };
@@ -333,8 +336,9 @@ export default class SilverBarChart extends React.Component {
     // And the data:
     config.data = seriesConf.data;
     config.headers = seriesConf.headers;
+    config.seriesCount = seriesConf.seriesCount;
     // Colours, based on the number of series:
-    config.colourSet = barProperties.series.seriesColours[seriesConf.seriesCount - 1];
+    config.colourSet = barProperties.series.seriesColours[config.seriesCount - 1];
     // Assemble the y-scale object
     // Get category column header, to identify each cat string in data:
     const catHead = seriesConf.headers[0];
@@ -431,6 +435,7 @@ export default class SilverBarChart extends React.Component {
     const dimensions = config.dimensions;
     const width = dimensions.outerbox.width;
     const height = dimensions.outerbox.height;
+    // Define the SVG...
     const svgElements = (
       <svg
         className="svg-wrapper" ref="svgwrapper"
