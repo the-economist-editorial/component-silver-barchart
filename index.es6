@@ -169,7 +169,7 @@ export default class SilverBarChart extends React.Component {
     const svgNode = Dthree.select('.svg-wrapper');
     // Cumulative extra height for top margin
     let topExtraHeight = 0;
-    // +++ Title
+    // === === === Title
     // Temp height adjustment for 'current' string. Reset for each string.
     let tempExtraHeight = config.strings.title.leading;
     let tSpanLen = Dthree.select('.silver-d3-title-string').node().children.length - 1;
@@ -177,17 +177,16 @@ export default class SilverBarChart extends React.Component {
     // Tweak subtitle position with extra height added for title
     config.strings.subtitle.y += tempExtraHeight;
     topExtraHeight += tempExtraHeight;
-    // +++ Subtitle
+    // === === === Subtitle
     tempExtraHeight = config.strings.subtitle.leading;
     tSpanLen = Dthree.select('.silver-d3-subtitle-string').node().children.length - 1;
     tempExtraHeight *= tSpanLen;
     topExtraHeight += tempExtraHeight;
     // Tweak inner box top with extra height so far...
-    // Inner box height doesn't change. Outer box height doesn't change yet...
     config.dimensions.margins.top += topExtraHeight;
     // Cumulative extra height for bottom margin
     let bottomExtraHeight = 0;
-    // +++ Source
+    // === === === Source
     tempExtraHeight = config.strings.source.leading;
     tSpanLen = Dthree.select('.silver-d3-source-string').node().children.length - 1;
     tempExtraHeight *= tSpanLen;
@@ -200,9 +199,11 @@ export default class SilverBarChart extends React.Component {
     //
     // So now we have a cumulative extra height
     config.dimensions.margins.bottom += bottomExtraHeight;
-    config.dimensions.outerbox.height += (topExtraHeight + bottomExtraHeight);
-    //
-    // +++ Longest bar chart category:
+    // NOTE: outer box DOESN'T change -- up to user to make the call
+    // config.dimensions.outerbox.height += (topExtraHeight + bottomExtraHeight);
+    // But innerbox height DOES change...
+    config.dimensions.innerbox.height -= (topExtraHeight + bottomExtraHeight);
+    // === === === Longest bar chart category:
     // Text object
     const testText = svgNode.append('text')
       .attr('id', 'testText')
@@ -219,7 +220,7 @@ export default class SilverBarChart extends React.Component {
     // Update the bounds
     config.dimensions.margins.left += tWidth;
     config.dimensions.innerbox.width -= tWidth;
-    // +++ Last string on x-axis
+    // === === === Last string on x-axis
     testStr = String(config.minmax.max);
     // NOTE: crudely, for now: if it's > 1,000, add a comma to the string!
     // Don't forget decimal points, too!! But also see Evernote on
