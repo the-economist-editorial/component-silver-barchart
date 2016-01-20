@@ -131,7 +131,8 @@
     "@economist/component-silver-xaxis":"^1.0.0",
     "@economist/component-silver-yaxis":"^1.0.0",
     "@economist/component-silver-series-bar":"^1.0.0",
-    "@economist/component-silver-chartmargins":"^1.0.0"
+    "@economist/component-silver-chartmargins":"^1.0.0",
+    "@economist/component-silver-legend":"^1.0.0"
   },
   "devDependencies": {
     "@economist/component-devpack": "^3.4.3",

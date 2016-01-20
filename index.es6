@@ -6,6 +6,7 @@ import SilverXaxis from '@economist/component-silver-xaxis';
 import SilverYaxis from '@economist/component-silver-yaxis';
 import SilverSeriesBar from '@economist/component-silver-series-bar';
 import SilverChartMargins from '@economist/component-silver-chartmargins';
+import SilverLegend from '@economist/component-silver-legend';
 // Preferences
 import barProperties from './assets/barchart_properties.json';
 
@@ -34,9 +35,9 @@ export default class SilverBarChart extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      // Duration defaults to zero for initial render.
-      // NOTE: This is also a global preference and needs attention
-      duration: 0,
+      // For initial render, duration is set to first element in
+      // the array baked into ChartWrapper
+      duration: props.config.duration[0],
       // checkMargins flag is true to force stringwidth check
       checkMargins: true,
       // config:
@@ -88,9 +89,9 @@ export default class SilverBarChart extends React.Component {
     const bounds = this.setBounds(config.dimensions);
     this.setState({
       // This.setState doesn't force a premature render in this context.
-      // So I'm just using this to force use of inherited duration ofter
-      // initial has used default zero...
-      duration: newProps.config.duration,
+      // So I'm just using this to force use of 'update' duration
+      // baked into ChartWrapper
+      duration: newProps.config.duration[1],
       // ...and to reset chart depth:
       config,
       bounds,
@@ -424,7 +425,6 @@ export default class SilverBarChart extends React.Component {
   // RENDER
   render() {
     const config = this.state.config;
-    // NOTE: the usual warning about tracking down how duration is set...
     config.duration = this.state.duration;
     // Custom config objects for the various d3 components:
     const xAxisConfig = this.configXaxis(config);
@@ -443,6 +443,7 @@ export default class SilverBarChart extends React.Component {
         width={width} height={height}
       >
         <SilverChartMargins config={config}/>
+        <SilverLegend config={config}/>
         <g className="chart-main-group">
           <SilverXaxis config={xAxisConfig}/>
           <SilverYaxis config={yAxisConfig}/>
