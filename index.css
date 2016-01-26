@@ -2,6 +2,7 @@
 @import '@economist/component-silver-yaxis';
 @import '@economist/component-silver-series-bar';
 @import '@economist/component-silver-chartmargins';
+@import '@economist/component-silver-legend';
 
 /*  If this is all this does, couldn't it usefully move up the tree,
     so that it doesn't have to be duplicated across all style components...?

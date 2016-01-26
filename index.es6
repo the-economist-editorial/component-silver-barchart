@@ -1,3 +1,4 @@
+/* global document */
 import React from 'react';
 import ReactDom from 'react-dom';
 import Dthree from 'd3';
@@ -168,7 +169,7 @@ export default class SilverBarChart extends React.Component {
     const config = this.state.config;
     // Context
     const svgNode = Dthree.select('.svg-wrapper');
-    // Cumulative extra height for top margin
+    // Cumulative extra height for the top margin
     let topExtraHeight = 0;
     // === === === Title
     // Temp height adjustment for 'current' string. Reset for each string.
@@ -183,8 +184,21 @@ export default class SilverBarChart extends React.Component {
     tSpanLen = Dthree.select('.silver-d3-subtitle-string').node().children.length - 1;
     tempExtraHeight *= tSpanLen;
     topExtraHeight += tempExtraHeight;
+
+    // === === === Legend
+    // Get a top position for the legend group before we adjust the innerbox for it...
+    config.dimensions.legendTop = (config.dimensions.margins.top + topExtraHeight - 10);
+    const legendGroup = document.getElementsByClassName('chart-legend-group')[0];
+    // if (typeof legendGroup !== 'undefined') {
+    const legendHeight = legendGroup.getBoundingClientRect().height;
+    console.log(`Height of legend box: ${legendHeight}`)
+    topExtraHeight += Math.round(legendHeight);
+    // }
+    // === === === Legend ends
+
     // Tweak inner box top with extra height so far...
     config.dimensions.margins.top += topExtraHeight;
+
     // Cumulative extra height for bottom margin
     let bottomExtraHeight = 0;
     // === === === Source
@@ -339,7 +353,7 @@ export default class SilverBarChart extends React.Component {
     config.data = seriesConf.data;
     config.headers = seriesConf.headers;
     config.seriesCount = seriesConf.seriesCount;
-    // Colours, based on the number of series:
+    // Colours from component lookup, based on the number of series:
     config.colourSet = barProperties.series.seriesColours[config.seriesCount - 1];
     // Assemble the y-scale object
     // Get category column header, to identify each cat string in data:
@@ -357,6 +371,30 @@ export default class SilverBarChart extends React.Component {
     return config;
   }
   // CONFIG SERIES BARS ends
+
+  // CONFIG LEGEND
+  // Assemple config object to pass to SilverLegend
+  configLegend(rawConfig) {
+    // I want an array of objects with props: string and colour
+    const legendArray = [];
+    // Colours from component lookup, based on the number of series:
+    const colourSet = barProperties.series.seriesColours[rawConfig.seriesCount - 1];
+    for (let i = 1; i < rawConfig.headers.length; i++) {
+      const temp = {};
+      temp.string = (rawConfig.headers[i]);
+      temp.colour = colourSet[i - 1];
+      legendArray.push(temp);
+    }
+    const config = {
+      bounds: this.state.bounds,
+      duration: rawConfig.duration,
+      firstRender: this.state.checkMargins,
+      legendArray,
+      seriesCount: rawConfig.seriesCount,
+    };
+    return config;
+  }
+  // CONFIG LEGEND ends
 
   // GET RANGE BANDS
   // Called from configSeriesBars/YAxis to calculate a D3-complient
@@ -391,14 +429,25 @@ export default class SilverBarChart extends React.Component {
 
   // MAIN D3 GROUP TRANSITION
   // Called from (componentDidMount -- actually, not any more and) componentDidUpdate
+  // On 2nd render only, after adjustments have been made to the background elements
+  // (strings and legand)
   // Animates main D3 group to position
+  // NB: This isn't interested in mainGroup *size* -- only in location
   mainDthreeGroupTransition(duration) {
-    const margins = this.props.config.dimensions.margins;
+    const config = this.props.config;
+    const margins = config.dimensions.margins;
     const bLeft = margins.left;
     const bTop = margins.top;
     const transStr = `translate(${bLeft}, ${bTop})`;
     const mainGroup = Dthree.select('.chart-main-group');
     mainGroup.transition().duration(duration).attr('transform', transStr);
+    // And legend group...
+    if (config.seriesCount > 1) {
+      const legTop = config.dimensions.legendTop;
+      const legTransStr = `translate(${bLeft}, ${legTop})`;
+      const legendGroup = Dthree.select('.chart-legend-group');
+      legendGroup.transition().duration(duration).attr('transform', legTransStr);
+    }
   }
   // Because of the double-render, the above can only be called on an update (I think!)
 
@@ -430,6 +479,7 @@ export default class SilverBarChart extends React.Component {
     const xAxisConfig = this.configXaxis(config);
     const yAxisConfig = this.configYaxis(config);
     const seriesBarsConfig = this.configSeriesBars(config);
+    const legendConfig = this.configLegend(config);
 
     // NOTE: svg-wrapper has explicit width and height
     // Does this require further attention...?
@@ -443,7 +493,7 @@ export default class SilverBarChart extends React.Component {
         width={width} height={height}
       >
         <SilverChartMargins config={config}/>
-        <SilverLegend config={config}/>
+        <SilverLegend config={legendConfig}/>
         <g className="chart-main-group">
           <SilverXaxis config={xAxisConfig}/>
           <SilverYaxis config={yAxisConfig}/>
