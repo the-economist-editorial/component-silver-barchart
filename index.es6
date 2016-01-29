@@ -187,18 +187,26 @@ export default class SilverBarChart extends React.Component {
 
     // === === === Legend
     // Get a top position for the legend group before we adjust the innerbox for it...
-    config.dimensions.legendTop = (config.dimensions.margins.top + topExtraHeight - 10);
+    // const legendTop = config.dimensions.legend.top + topExtraHeight;
+    config.dimensions.legend.top += topExtraHeight;
+    // NOTE: I'm not quite sure why I have to deduct an extra 'line', but apparently
+    // I do... Also not sure why it's an arbitrary 10px. I'm missing something!!!
+    // NOTE: === === === FIX THIS === ==== ==== ===== === ==== === === === ==== ====== ===== ==== = = =
+    // legendTop -= 10;
+    // legendTop -= config.dimensions.legendLineHeight;
+    // config.dimensions.legendTop = legendTop;
     const legendGroup = document.getElementsByClassName('chart-legend-group')[0];
-    // if (typeof legendGroup !== 'undefined') {
-    const legendHeight = legendGroup.getBoundingClientRect().height;
-    console.log(`Height of legend box: ${legendHeight}`)
+    // const legendHeight = legendGroup.getBoundingClientRect().height;
+    // Firefox acts the maggot with that, so:
+    const legendHeight = legendGroup.getBBox().height;
     topExtraHeight += Math.round(legendHeight);
-    // }
     // === === === Legend ends
 
     // Tweak inner box top with extra height so far...
+    // (NOTE: for bar charts, top bar runs along top of innerbox top;
+    // and axis is outside and above innerbox...)
     config.dimensions.margins.top += topExtraHeight;
-
+    console.log(`Top margin: ${config.dimensions.margins.top}`)
     // Cumulative extra height for bottom margin
     let bottomExtraHeight = 0;
     // === === === Source
@@ -385,11 +393,14 @@ export default class SilverBarChart extends React.Component {
       temp.colour = colourSet[i - 1];
       legendArray.push(temp);
     }
+    // Re-assembled legend object...
+    const legend = rawConfig.dimensions.legend;
+    legend.data = legendArray;
     const config = {
       bounds: this.state.bounds,
       duration: rawConfig.duration,
       firstRender: this.state.checkMargins,
-      legendArray,
+      legend,
       seriesCount: rawConfig.seriesCount,
     };
     return config;
@@ -443,7 +454,7 @@ export default class SilverBarChart extends React.Component {
     mainGroup.transition().duration(duration).attr('transform', transStr);
     // And legend group...
     if (config.seriesCount > 1) {
-      const legTop = config.dimensions.legendTop;
+      const legTop = config.dimensions.legend.top;
       const legTransStr = `translate(${bLeft}, ${legTop})`;
       const legendGroup = Dthree.select('.chart-legend-group');
       legendGroup.transition().duration(duration).attr('transform', legTransStr);
