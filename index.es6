@@ -1,4 +1,3 @@
-/* global document */
 import React from 'react';
 import ReactDom from 'react-dom';
 import Dthree from 'd3';
@@ -189,15 +188,10 @@ export default class SilverBarChart extends React.Component {
     // Get a top position for the legend group before we adjust the innerbox for it...
     // const legendTop = config.dimensions.legend.top + topExtraHeight;
     config.dimensions.legend.top += topExtraHeight;
-    // NOTE: I'm not quite sure why I have to deduct an extra 'line', but apparently
-    // I do... Also not sure why it's an arbitrary 10px. I'm missing something!!!
-    // NOTE: === === === FIX THIS === ==== ==== ===== === ==== === === === ==== ====== ===== ==== = = =
-    // legendTop -= 10;
-    // legendTop -= config.dimensions.legendLineHeight;
-    // config.dimensions.legendTop = legendTop;
-    const legendGroup = document.getElementsByClassName('chart-legend-group')[0];
-    // const legendHeight = legendGroup.getBoundingClientRect().height;
-    // Firefox acts the maggot with that, so:
+    // Originally, to get height of legend group, I did this:
+    // const legendGroup = document.getElementsByClassName('chart-legend-group')[0];
+    // But better to double-wrap legend so I can ref to outer group here:
+    const legendGroup = this.refs.outerLegendGroup;
     const legendHeight = legendGroup.getBBox().height;
     topExtraHeight += Math.round(legendHeight);
     // === === === Legend ends
@@ -206,7 +200,6 @@ export default class SilverBarChart extends React.Component {
     // (NOTE: for bar charts, top bar runs along top of innerbox top;
     // and axis is outside and above innerbox...)
     config.dimensions.margins.top += topExtraHeight;
-    console.log(`Top margin: ${config.dimensions.margins.top}`)
     // Cumulative extra height for bottom margin
     let bottomExtraHeight = 0;
     // === === === Source
@@ -504,7 +497,9 @@ export default class SilverBarChart extends React.Component {
         width={width} height={height}
       >
         <SilverChartMargins config={config}/>
-        <SilverLegend config={legendConfig}/>
+        <g ref="outerLegendGroup">
+          <SilverLegend config={legendConfig}/>
+        </g>
         <g className="chart-main-group">
           <SilverXaxis config={xAxisConfig}/>
           <SilverYaxis config={yAxisConfig}/>
