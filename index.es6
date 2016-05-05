@@ -17,6 +17,7 @@ export default class SilverBarChart extends React.Component {
   static get propTypes() {
     return {
       test: React.PropTypes.string,
+      ccKey: React.PropTypes.string,
       config: React.PropTypes.object.isRequired,
       // Flag and callback for svg content
       getSvg: React.PropTypes.bool,
